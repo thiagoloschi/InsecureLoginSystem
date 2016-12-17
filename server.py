@@ -9,6 +9,7 @@ from flask import send_from_directory
 from flask import session
 from jinja2 import Environment
 from jinja2 import PackageLoader
+import hashlib
 
 _ARQUIVO_BANCO_ = './banco.sqlite'
 
@@ -31,16 +32,22 @@ if not os.path.isfile(_ARQUIVO_BANCO_):
 def sqlite_cadastra_usuario(email, senha):
     con = sqlite3.connect(_ARQUIVO_BANCO_)
     cursor = con.cursor()
-    cursor.execute('INSERT INTO usuario (email, senha) VALUES ("%s", "%s")' % (email, senha))
+    cursor.execute('INSERT INTO usuario (email, senha) VALUES ("%s", "%s")' % (email, gera_hash(senha)))
     con.commit()
     con.close()
 
+def gera_hash(senha):
+	COS = 'aeb308bb54721b58482'
+	hash_object = hashlib.sha1()
+	hash_object.update(senha+COS)
+	hex_dig = hash_object.hexdigest()
+	return hex_dig
 
 def sqlite_consulta_usuario(email, senha):
     usuario = ''
     con = sqlite3.connect(_ARQUIVO_BANCO_)
     cursor = con.cursor()
-    cursor.execute('SELECT * from usuario WHERE usuario.email = "%s" AND usuario.senha = "%s"' % (email, senha))
+    cursor.execute('SELECT * from usuario WHERE usuario.email = "%s" AND usuario.senha = "%s"' % (email, gera_hash(senha)))
     for linha in cursor.fetchall():
         usuario = linha
     con.close()
